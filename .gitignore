@@ -7,7 +7,7 @@ dbt_packages/
 
 # duckdb files
 *.duckdb
-*.duckdb.wal
+# *.duckdb.wal
 
 # data artifacts
 # /data/**
