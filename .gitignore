@@ -1,3 +1,15 @@
+# dbt build artifacts
+dbt/target/
+dbt/logs/
+
+# duckdb files
+*.duckdb
+*.duckdb.wal
+
+# data artifacts
+/data/
+/data/**
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
