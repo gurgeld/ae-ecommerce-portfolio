@@ -6,7 +6,7 @@ dbt/logs/
 dbt_packages/
 
 # duckdb files
-*.duckdb
+# *.duckdb
 # *.duckdb.wal
 
 # data artifacts
