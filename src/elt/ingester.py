@@ -30,24 +30,40 @@ con = duckdb.connect(DB_PATH)
 con.execute(f"create schema if not exists {SCHEMA}")
 
 # --- Fix encoding ---
-def load_csv_with_fallback(handle: str, file_path: str, encodings: Iterable[str] = ("utf-8-sig", "utf-8", "cp1252", "latin1")) -> pd.DataFrame:
+def load_csv_with_fallback(
+    handle: str,
+    file_path: str,
+    encodings: Iterable[str] = ("utf-8-sig", "utf-8", "cp1252", "latin1"),
+) -> pd.DataFrame:
+    """Load a CSV file from Kaggle trying multiple encodings/parse strategies."""
+
+    base_kwargs = {
+        "encoding_errors": "replace",
+        "dtype": "string",
+    }
+    parse_strategies = (
+        {},  # default fast "c" engine
+        {"engine": "python", "on_bad_lines": "warn"},
+        {"engine": "python", "on_bad_lines": "skip"},
+    )
+
     last_err = None
     for enc in encodings:
-        try:
-            return kagglehub.dataset_load(
-                KaggleDatasetAdapter.PANDAS,
-                handle,
-                file_path,
-                pandas_kwargs={
-                    "encoding": enc,
-                    "encoding_errors": "replace",
-                    "dtype": "string",
-                },
-            )
-        except Exception as e:
-            last_err = e
+        for extra_kwargs in parse_strategies:
+            try:
+                pandas_kwargs = {**base_kwargs, **extra_kwargs, "encoding": enc}
+                return kagglehub.dataset_load(
+                    KaggleDatasetAdapter.PANDAS,
+                    handle,
+                    file_path,
+                    pandas_kwargs=pandas_kwargs,
+                )
+            except Exception as e:
+                last_err = e
     # If none worked, bubble up the last error with context
-    raise RuntimeError(f"Failed to read {file_path} with tried encodings: {encodings}") from last_err
+    raise RuntimeError(
+        f"Failed to read {file_path} with tried encodings: {encodings} and parse strategies: {parse_strategies}"
+    ) from last_err
 
 
 for file_path, table in FILES.items():
