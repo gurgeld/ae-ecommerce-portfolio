@@ -1,9 +1,8 @@
 from pathlib import Path
 import duckdb
 import pandas as pd
-import kagglehub
-from kagglehub import KaggleDatasetAdapter
-from typing import Iterable
+from kagglehub.dataset import KaggleDatasetAdapter
+from kagglehub.dataset import download as dataset_download
 
 # --- Files ---
 FILES = {
@@ -25,49 +24,36 @@ DB_PATH = DATA_DIR / "olist.duckdb"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 SCHEMA = "raw"
 
+# --- Dataset download ---
+DATASET_HANDLE = "olistbr/brazilian-ecommerce"
+DATASET = dataset_download(DATASET_HANDLE, adapter=KaggleDatasetAdapter.PANDAS)
+
 # --- DB Connection ---
 con = duckdb.connect(DB_PATH)
 con.execute(f"create schema if not exists {SCHEMA}")
 
 # --- Fix encoding ---
-def load_csv_with_fallback(
-    handle: str,
-    file_path: str,
-    encodings: Iterable[str] = ("utf-8-sig", "utf-8", "cp1252", "latin1"),
-) -> pd.DataFrame:
-    """Load a CSV file from Kaggle trying multiple encodings/parse strategies."""
+def load_csv_with_fallback(file_path: str) -> pd.DataFrame:
+    """Load a CSV file from Kaggle using the in-memory pandas adapter."""
 
-    base_kwargs = {
-        "encoding_errors": "replace",
-        "dtype": "string",
-    }
-    parse_strategies = (
-        {},  # default fast "c" engine
-        {"engine": "python", "on_bad_lines": "warn"},
-        {"engine": "python", "on_bad_lines": "skip"},
-    )
+    try:
+        df = DATASET[file_path]
+    except KeyError as exc:
+        raise FileNotFoundError(
+            f"Could not find {file_path} in Kaggle dataset {DATASET_HANDLE}"
+        ) from exc
 
-    last_err = None
-    for enc in encodings:
-        for extra_kwargs in parse_strategies:
-            try:
-                pandas_kwargs = {**base_kwargs, **extra_kwargs, "encoding": enc}
-                return kagglehub.dataset_load(
-                    KaggleDatasetAdapter.PANDAS,
-                    handle,
-                    file_path,
-                    pandas_kwargs=pandas_kwargs,
-                )
-            except Exception as e:
-                last_err = e
-    # If none worked, bubble up the last error with context
-    raise RuntimeError(
-        f"Failed to read {file_path} with tried encodings: {encodings} and parse strategies: {parse_strategies}"
-    ) from last_err
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(
+            f"Expected pandas DataFrame for {file_path}, got {type(df)!r} from KaggleHub"
+        )
+
+    # Copy so we can add metadata columns without mutating the cached DataFrame
+    return df.copy()
 
 
 for file_path, table in FILES.items():
-    df = load_csv_with_fallback("olistbr/brazilian-ecommerce", file_path)
+    df = load_csv_with_fallback(file_path)
     df["_ingested_at"] = pd.Timestamp.utcnow()
     df["_source_file"] = file_path
 
