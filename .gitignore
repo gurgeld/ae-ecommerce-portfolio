@@ -1,3 +1,5 @@
+file_structure.txt
+
 # dbt build artifacts
 dbt/target/
 dbt/logs/

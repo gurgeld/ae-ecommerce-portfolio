@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: customers
+  - name: mrt_customers
     columns:
       - name: customer_id
         tests: [not_null, unique]

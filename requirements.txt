@@ -1,0 +1,14 @@
+# Core data & file handling
+pandas
+duckdb
+pathlib
+shutilwhich
+
+# Kaggle dataset ingestion
+kagglehub
+
+# dbt for modeling and transformations
+dbt-duckdb
+
+# Optional: Streamlit for dashboarding (if included later)
+streamlit
