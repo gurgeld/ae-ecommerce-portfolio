@@ -1,6 +1,7 @@
 # dbt build artifacts
 dbt/target/
 dbt/logs/
+dbt_packages/
 
 # duckdb files
 *.duckdb
