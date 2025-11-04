@@ -4,7 +4,7 @@ E-commerce Operations Analytics
 # Dataset Source
 [Brazilian E-Commerce Public Dataset by Olist](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce/data)
 
-![Model](https://imgur.com/HRhd2Y0)
+![Model](https://i.imgur.com/HRhd2Y0.png)
 
 # Streamlit App
 [Dashboard](https://ae-ecommerce-portfolio.streamlit.app/)
